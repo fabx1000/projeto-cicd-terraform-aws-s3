@@ -16,7 +16,7 @@ provider "aws" {
 resource "aws_s3_bucket" "static_website" {
   bucket = var.bucket_name
   tags = {
-    Name = "Static Website Bucket - \${var.bucket_name}"
+    Name = "Static Website Bucket - ${var.bucket_name}"
   }
 }
 
@@ -49,7 +49,7 @@ resource "aws_s3_bucket_policy" "bucket_policy" {
         "Principal" = "*",
         "Action" = "s3:GetObject",
         "Resource" = [
-          "\${aws_s3_bucket.static_website.arn}/*",
+          "${aws_s3_bucket.static_website.arn}/*",
         ]
       }
     ]

@@ -14,8 +14,8 @@ jobs:
     
     # Variáveis de ambiente
     env:
-      AWS_REGION: \${{ secrets.AWS_REGION }}
-      BUCKET_NAME: \${{ secrets.BUCKET_NAME_TF }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      BUCKET_NAME: ${{ secrets.BUCKET_NAME_TF }}
       
     steps:
       # --- STAGE 1: CI (Integração Contínua) ---
@@ -26,9 +26,9 @@ jobs:
       - name: 2. Configurar Credenciais da AWS
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: \${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: \${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: \${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: 3. Build da Imagem Docker (Simulação)
         run: docker build -t meu-site-simples .
@@ -56,16 +56,16 @@ jobs:
           terraform init
           # terraform apply é Idempotente, só muda o que for necessário
           terraform apply -auto-approve \
-            -var "bucket_name=\${{ env.BUCKET_NAME }}" \
-            -var "aws_region=\${{ env.AWS_REGION }}"
+            -var "bucket_name=${{ env.BUCKET_NAME }}" \
+            -var "aws_region=${{ env.AWS_REGION }}"
             
       # --- STAGE 3: CD (Entrega Contínua) ---
       
       - name: 7. Deploy dos Arquivos para o AWS S3
         run: |
-          echo "Sincronizando arquivos estáticos para o bucket S3: \${{ env.BUCKET_NAME }}"
+          echo "Sincronizando arquivos estáticos para o bucket S3: ${{ env.BUCKET_NAME }}"
           # Sincroniza apenas o conteúdo do site, excluindo pastas de configuração
-          aws s3 sync . s3://\${{ env.BUCKET_NAME }} \
+          aws s3 sync . s3://${{ env.BUCKET_NAME }} \
             --exclude "infra/*" \
             --exclude ".git/*" \
             --exclude ".github/*" \

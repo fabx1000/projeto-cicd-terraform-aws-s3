@@ -1,9 +1,9 @@
 // A função que contém a lógica que queremos testar (Função Pura)
 function saudacao(nome) {
     if (nome && typeof nome === 'string' && nome.trim() !== '') {
-        return "Olá, " + nome + "! A lógica foi testada com sucesso!";
+        return "Olá, " + nome + "!";
     } else {
-        return "Olá, Visitante! A lógica foi testada com sucesso!";
+        return "Olá, Visitante!";
     }
 }
 
