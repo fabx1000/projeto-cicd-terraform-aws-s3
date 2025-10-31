@@ -1,0 +1,77 @@
+name: Pipeline CI/CD com IaC (Terraform) e Deploy
+
+on:
+  # O pipeline é acionado a cada push na branch 'main'
+  push:
+    branches:
+      - main
+  # Permite acionamento manual
+  workflow_dispatch:
+
+jobs:
+  iac-and-deploy:
+    runs-on: ubuntu-latest
+    
+    # Variáveis de ambiente
+    env:
+      AWS_REGION: \${{ secrets.AWS_REGION }}
+      BUCKET_NAME: \${{ secrets.BUCKET_NAME_TF }}
+      
+    steps:
+      # --- STAGE 1: CI (Integração Contínua) ---
+      
+      - name: 1. Checkout do Repositório
+        uses: actions/checkout@v4
+
+      - name: 2. Configurar Credenciais da AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: \${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: \${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: \${{ env.AWS_REGION }}
+
+      - name: 3. Build da Imagem Docker (Simulação)
+        run: docker build -t meu-site-simples .
+        
+      - name: 4. Execução dos Testes (Verificação Simples)
+        run: |
+          echo "Rodando testes simples..."
+          # Em um pipeline real, usaria-se um runner Node.js e 'npm test'
+          if [ -f testes/test.js ]; then
+            echo "✅ Arquivos de teste encontrados. CI Aprovado!"
+          else
+            echo "❌ Arquivos de teste não encontrados. Falha no CI!"
+            exit 1 # Falha no pipeline
+          fi
+
+      # --- STAGE 2: IaC (Infraestrutura como Código) ---
+
+      - name: 5. Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: 6. Aplicar Configuração do Terraform (Cria/Atualiza Infra)
+        id: apply_tf
+        run: |
+          cd infra
+          terraform init
+          # terraform apply é Idempotente, só muda o que for necessário
+          terraform apply -auto-approve \
+            -var "bucket_name=\${{ env.BUCKET_NAME }}" \
+            -var "aws_region=\${{ env.AWS_REGION }}"
+            
+      # --- STAGE 3: CD (Entrega Contínua) ---
+      
+      - name: 7. Deploy dos Arquivos para o AWS S3
+        run: |
+          echo "Sincronizando arquivos estáticos para o bucket S3: \${{ env.BUCKET_NAME }}"
+          # Sincroniza apenas o conteúdo do site, excluindo pastas de configuração
+          aws s3 sync . s3://\${{ env.BUCKET_NAME }} \
+            --exclude "infra/*" \
+            --exclude ".git/*" \
+            --exclude ".github/*" \
+            --exclude "Dockerfile" \
+            --exclude ".dockerignore" \
+            --exclude "testes/*"
+            
+      - name: 8. Deploy Concluído 🎉
+        run: echo "O deploy do site foi concluído no S3!"

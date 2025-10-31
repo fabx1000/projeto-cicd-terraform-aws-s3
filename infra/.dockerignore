@@ -1,0 +1,5 @@
+# Ignora arquivos de configuração de infraestrutura e Git
+infra/
+.git/
+.github/
+.gitignore
